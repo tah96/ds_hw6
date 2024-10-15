@@ -4,10 +4,107 @@ format: html
 editor: visual
 ---
 
-## Running Code
+## Libraries
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+Before starting anything, we will read in our necessary libraries
 
 ```{r}
-1 + 1
+library(tidyverse)
 ```
+
+## Task 2: Writing R Functions
+
+To get some practice writing some advanced R functions using our new libraries, we will start by writing a function to compute Root Mean Square Error (RMSE).
+
+We want to pass a vector of responses and predictions. We also want to give the user an option to pass additional arguments in our function that get passed to the mean function to instruct how to deal with NA values
+
+```{r}
+getRMSE <- function(responses,predictions,...){
+  if (!is.vector(responses) | !is.vector(predictions)) {
+    stop("Both your response and prediction inputs must be vectors")
+  }
+  meanError <- mean((responses-predictions)^2,...)
+  squareMeanError <- sqrt(meanError)
+  return(squareMeanError)
+}
+```
+
+Lets create some response and prediction variables.
+
+```{r}
+set.seed(10)
+n <- 100
+x <- runif(n)
+resp <- 3 + 10 * x + rnorm(n)
+pred <- predict(lm(resp ~ x), data.frame(x))
+```
+
+Using this data, lets tests or `getRMSE` function to make sure it works without error.
+
+```{r}
+getRMSE(responses = resp,predictions = pred)
+```
+We need replace two values in our response vector with `NA_real_` to ensure we can specify behavior to deal with these and not. Lets replaced the 31st and 52nd values with `NA_real_`
+
+```{r}
+resp[31] <- NA_real_
+resp[52] <- NA_real_
+```
+
+Lets test the function specifying how to deal with these NAs and without specifying how to deal with these.
+
+We see when no behavior is specified we get an error, but when we specify `na.rm=TRUE` our function will pass this to the localized mean function and remove NAs
+
+```{r}
+## No behavior specified
+getRMSE(resp,pred)
+
+## Behavior specified.
+getRMSE(resp,pred,na.rm=TRUE)
+```
+In addition to RMSE, we want to look at MAE or the Mean Absolute Error. Lets create a function for this and follow similar behaviors to getRMSE
+
+```{r}
+getMAE <- function(responses,predictions,...){
+  if (!is.vector(responses) | !is.vector(predictions)) {
+    stop("Both your response and prediction inputs must be vectors")
+  }
+  absMeanError <- mean(abs(responses-predictions),...)
+  return(absMeanError)
+}
+```
+
+Reset our responses and predictions...
+
+```{r}
+set.seed(10)
+n <- 100
+x <- runif(n)
+resp <- 3 + 10 * x + rnorm(n)
+pred <- predict(lm(resp ~ x), data.frame(x))
+```
+
+Lets test the function. Success!
+
+```{r}
+getMAE(resp,pred)
+```
+We need replace two values in our response vector with `NA_real_` to ensure we can specify behavior to deal with these and not. Lets replaced the 31st and 52nd values with `NA_real_`
+
+```{r}
+resp[31] <- NA_real_
+resp[52] <- NA_real_
+```
+
+Lets test the function specifying how to deal with these NAs and without specifying how to deal with these.
+
+We see when no behavior is specified we get an error, but when we specify `na.rm=TRUE` our function will pass this to the localized mean function and remove NAs
+
+```{r}
+## No behavior specified
+getMAE(resp,pred)
+
+## Behavior specified.
+getMAE(resp,pred,na.rm=TRUE)
+```
+Let’s create a wrapper function that can be used to get either or both metrics returned with a single function call with appropriate names. We'll perform checks, default behaviors and flexibility features to allow for other metrics that aren't RMSE or MAE
