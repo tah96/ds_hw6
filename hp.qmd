@@ -108,3 +108,63 @@ getMAE(resp,pred)
 getMAE(resp,pred,na.rm=TRUE)
 ```
 Let’s create a wrapper function that can be used to get either or both metrics returned with a single function call with appropriate names. We'll perform checks, default behaviors and flexibility features to allow for other metrics that aren't RMSE or MAE
+
+The function should check that two numeric (atomic) vectors have been passed (consider is.vector(),
+is.atomic(), and is.numeric()). If not, a message should print and the function should exit.
+• The function should return both metrics by default and include names. The behavior should be able to be changed using a character string of metrics to find.
+
+```{r}
+wrapperFunc <- function(func = list("getRMSE","getMAE"),responses,predictions,...){
+  if ((!is.vector(responses) | !is.vector(predictions)) | 
+      (!is.atomic(responses) | !is.atomic(predictions)) |
+      (!is.numeric(responses) | !is.numeric(predictions))
+      ){
+    stop("Both your response and prediction inputs must be atomic numeric vectors")
+  }
+  resultList <- list()
+  for(f in func){
+    retrieveFunc <- get(f)
+    funcVal <- retrieveFunc(responses,predictions,...)
+    resultList[[as_label(paste0(f,"_value"))]] <- funcVal
+  }
+  return(resultList)
+}
+```
+
+Now for some testing. We will perform three basic tests to start out. One where we call `getRMSE`. Another where we call `getMAE`. Last where we call both `getRMSE` and `getMAE`. We'll reset the seed and our response and prediction variables as well.
+
+```{r}
+set.seed(10)
+n <- 100
+x <- runif(n)
+resp <- 3 + 10 * x + rnorm(n)
+pred <- predict(lm(resp ~ x), data.frame(x))
+
+wrapperFunc(func = list("getRMSE"),resp,pred)
+wrapperFunc(func = list("getMAE"),resp,pred)
+wrapperFunc(func = list("getMAE","getRMSE"),resp,pred)
+```
+Lets repeat this but replace two values with `NA_real_`. We will do this with and without specifying the handling of NA behavior.
+
+```{r}
+resp[31] <- NA_real_
+resp[52] <- NA_real_
+
+## No spec for NA
+
+wrapperFunc(func = list("getRMSE"),resp,pred)
+wrapperFunc(func = list("getMAE"),resp,pred)
+wrapperFunc(func = list("getMAE","getRMSE"),resp,pred)
+
+## Spec for NA
+
+wrapperFunc(func = list("getRMSE"),resp,pred,na.rm=TRUE)
+wrapperFunc(func = list("getMAE"),resp,pred,na.rm=TRUE)
+wrapperFunc(func = list("getMAE","getRMSE"),resp,pred,na.rm=TRUE)
+```
+Now what about passing something that isn't two vectors? Lets pass a vector of string values of  in our response and prediction variables.
+
+```{r}
+wrapperFunc(responses=c("1","2","3"),predictions = c("4","5","6"))
+```
+
