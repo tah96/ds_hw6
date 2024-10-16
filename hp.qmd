@@ -178,7 +178,7 @@ wrapperFunc(func = list("getMAE","getRMSE"),resp,pred,na.rm=TRUE)
 
 Now what about passing something that isn't two vectors? Lets pass a vector of string values of in our response and prediction variables.
 
-```{r}
+```{r error=TRUE}
 wrapperFunc(responses=c("1","2","3"),predictions = c("4","5","6"))
 ```
 
