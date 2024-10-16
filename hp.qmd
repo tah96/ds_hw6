@@ -14,6 +14,14 @@ library(jsonlite)
 library(lubridate)
 ```
 
+## Task 1: Conceptual Questions
+
+1.  **What is the purpose of lapply()? What is the equivalent in purrr?** The purpose of lapply is to "apply" a function to each element in a list. The result is a list of equal length containing result of the function applied. The equivalent of this in purrr is the map() function
+2.  **Suppose we have a list called my_list. Each element of the list is a numeric data frame (all columns are numeric). We want use lapply() to run the code cor(numeric_matrix, method = "kendall") on each element of the list. Write code to do this below! (I'm really trying to ask you how you specify method = "kendall" when calling lapply())** lapply(my_list, cor, method = "kendall")
+3.  **What are two advantages of using purrr functions instead of the BaseR apply family?** Purrr functions are usually cleaner and more consistent than the BaseR apply. They also come with helper functions that work well within the tidyverse to improve usability.
+4.  **What is a side-effect function?** A function that does more than return a result. Examples are print() or write_csv().
+5.  **Why can you name a variable sd in a function and not cause any issues with sd outside the function?** Variables inside a function are encased in a temporary environment and only exist while the function is behind executed. Because of this localized behavior, it does not interfere with other environmental variables
+
 ## Task 2: Writing R Functions
 
 To get some practice writing some advanced R functions using our new libraries, we will start by writing a function to compute Root Mean Square Error (RMSE).
@@ -46,6 +54,7 @@ Using this data, lets tests or `getRMSE` function to make sure it works without 
 ```{r}
 getRMSE(responses = resp,predictions = pred)
 ```
+
 We need replace two values in our response vector with `NA_real_` to ensure we can specify behavior to deal with these and not. Lets replaced the 31st and 52nd values with `NA_real_`
 
 ```{r}
@@ -64,6 +73,7 @@ getRMSE(resp,pred)
 ## Behavior specified.
 getRMSE(resp,pred,na.rm=TRUE)
 ```
+
 In addition to RMSE, we want to look at MAE or the Mean Absolute Error. Lets create a function for this and follow similar behaviors to getRMSE
 
 ```{r}
@@ -91,6 +101,7 @@ Lets test the function. Success!
 ```{r}
 getMAE(resp,pred)
 ```
+
 We need replace two values in our response vector with `NA_real_` to ensure we can specify behavior to deal with these and not. Lets replaced the 31st and 52nd values with `NA_real_`
 
 ```{r}
@@ -109,11 +120,10 @@ getMAE(resp,pred)
 ## Behavior specified.
 getMAE(resp,pred,na.rm=TRUE)
 ```
-Let’s create a wrapper function that can be used to get either or both metrics returned with a single function call with appropriate names. We'll perform checks, default behaviors and flexibility features to allow for other metrics that aren't RMSE or MAE
 
-The function should check that two numeric (atomic) vectors have been passed (consider is.vector(),
-is.atomic(), and is.numeric()). If not, a message should print and the function should exit.
-• The function should return both metrics by default and include names. The behavior should be able to be changed using a character string of metrics to find.
+Let's create a wrapper function that can be used to get either or both metrics returned with a single function call with appropriate names. We'll perform checks, default behaviors and flexibility features to allow for other metrics that aren't RMSE or MAE
+
+The function should check that two numeric (atomic) vectors have been passed (consider is.vector(), is.atomic(), and is.numeric()). If not, a message should print and the function should exit. • The function should return both metrics by default and include names. The behavior should be able to be changed using a character string of metrics to find.
 
 ```{r}
 wrapperFunc <- function(func = list("getRMSE","getMAE"),responses,predictions,...){
@@ -146,6 +156,7 @@ wrapperFunc(func = list("getRMSE"),resp,pred)
 wrapperFunc(func = list("getMAE"),resp,pred)
 wrapperFunc(func = list("getMAE","getRMSE"),resp,pred)
 ```
+
 Lets repeat this but replace two values with `NA_real_`. We will do this with and without specifying the handling of NA behavior.
 
 ```{r}
@@ -164,11 +175,13 @@ wrapperFunc(func = list("getRMSE"),resp,pred,na.rm=TRUE)
 wrapperFunc(func = list("getMAE"),resp,pred,na.rm=TRUE)
 wrapperFunc(func = list("getMAE","getRMSE"),resp,pred,na.rm=TRUE)
 ```
-Now what about passing something that isn't two vectors? Lets pass a vector of string values of  in our response and prediction variables.
+
+Now what about passing something that isn't two vectors? Lets pass a vector of string values of in our response and prediction variables.
 
 ```{r}
 wrapperFunc(responses=c("1","2","3"),predictions = c("4","5","6"))
 ```
+
 ## Task 3: Querying API Data
 
 Using our API skills, we're going to construct an API call to pull some news data. I'm interested in sports data from the United States. We get a 200 Status ("Success") if ran correctly
@@ -176,7 +189,7 @@ Using our API skills, we're going to construct an API call to pull some news dat
 **Note:** The user will have to store the API Key in an R.environ file for this to work.
 
 ```{r}
-newsData <- httr::GET(url=paste0('https://newsapi.org/v2/top-headlines?country=us&category=sports&apiKey=',Sys.getenv("API_KEY")))
+newsData <- httr::GET(url=paste0('https://newsapi.org/v2/top-headlines?country=us&category=sports&apiKey=','2cce77c3fee5429693ef8fe6949ef84b'))
 ```
 
 We need to parse the content to extract what is needed. We want to use our `pluck` function from the `purrr` library to extract the articles from our data. We are using a function to accomplish this where our raw API data is pulled in.
@@ -190,7 +203,8 @@ rawToTibble <- function(rawData){
 
 rawToTibble(newsData)
 ```
-We want a user to be able to pass their own title/subject to search for (string), a time period to search from  and an API key.
+
+We want a user to be able to pass their own title/subject to search for (string), a time period to search from and an API key.
 
 By default, our topic will be "sports" retrieved from October 2024 onward. We see the call works with no parameters passed explicitly
 
@@ -201,18 +215,18 @@ newsAPICall <- function(topic="sports",timePeriod='2024-10-01',apiKey=Sys.getenv
   articles <- rawToTibble(rawCallData)
   return(articles)
 }
-
-newsAPICall()
 ```
+
 I want to retrieve data on the topic Amazon and data on the topic Tesla since October 1, 2024.
 
 ```{r}
-amazonArticles <- newsAPICall(topic="Amazon",timePeriod='2024-10-01')
-teslaArticles <- newsAPICall(topic="Tesla",timePeriod='2024-10-01')
+amazonArticles <- newsAPICall(topic="Amazon",timePeriod='2024-10-01',apiKey="2cce77c3fee5429693ef8fe6949ef84b")
+teslaArticles <- newsAPICall(topic="Tesla",timePeriod='2024-10-01',apiKey="2cce77c3fee5429693ef8fe6949ef84b")
 
 amazonArticles
 teslaArticles
 ```
+
 For our sources, we want to create a one-way contingency table for the source names. Lets do this for our Amazon article sources. We see most of our articles come from *Gizmodo.com*
 
 ```{r}
@@ -224,11 +238,8 @@ amazonSourceSummary <- amazonArticles %>%
 
 amazonSourceSummary
 ```
-That was interesting. Now for both our Amazon and Tesla data, we want to transform our data. We want to:
-1. Turn `publishedAt` into a date column
-2. Sort by the new `publishedAt` column
-3. Difference in publish dates
-4. Save our modifications as new data frames
+
+That was interesting. Now for both our Amazon and Tesla data, we want to transform our data. We want to: 1. Turn `publishedAt` into a date column 2. Sort by the new `publishedAt` column 3. Difference in publish dates 4. Save our modifications as new data frames
 
 ```{r}
 publishedTransform <- function(articleDf){
@@ -263,6 +274,3 @@ dateSummary <- function(df){
 dateSummary(amazonArticlesDates)
 dateSummary(teslaArticlesDates)
 ```
-
-
-
